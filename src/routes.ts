@@ -150,10 +150,17 @@ const categoryRouter = new Router({ prefix: "/category" })
   .get("/:id", async (ctx) => {
     ctx.response.body = {
       name: ctx.state.category,
-      mangas: (await getMangasInCategory(ctx.state.category)).map((v) =>
-        preprocessManga(v)
-      ),
+      mangas: (await getMangasInCategory(ctx.state.category)).map((v) => {
+        if (typeof v === "string") {
+          return v;
+        }
+        return preprocessManga(v);
+      }),
     };
+  })
+  .post("/:id", async (ctx) => {
+    console.log(await ctx.request.body.json());
+    ctx.response.body = await ctx.request.body.json();
   });
 
 export const apiRouter = new Router({ prefix: "/api" })
