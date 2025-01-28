@@ -8,7 +8,7 @@ import {
   isMangaAdded,
   isChapterAdded,
 } from "./db.ts";
-import { MakeOptional, smartSort } from "./utils.ts";
+import { MakeOptional, msToTime, smartSort } from "./utils.ts";
 import { ChapterSchema, MangaSchema } from "./models.ts";
 import { syncTachidesk } from "./tachidesk.ts";
 import config from "./config.ts";
@@ -42,6 +42,8 @@ export async function scanLibrary(path: string, options?: { deep?: boolean }) {
       const mangaId = await addManga(mangaDb);
 
       const chapters: MakeOptional<ChapterSchema, "chapterNumber">[] = [];
+
+      const startDate = Date.now();
 
       for (const chapter of Deno.readDirSync(mangaPath)) {
         const chapterExt = extname(chapter.name);
@@ -96,7 +98,9 @@ export async function scanLibrary(path: string, options?: { deep?: boolean }) {
           })
       );
 
-      console.log(`Inserted ${manga.name}`);
+      console.log(
+        `Inserted ${manga.name}: ${msToTime(Date.now() - startDate)}`
+      );
 
       syncTachidesk({ ...mangaDb, id: mangaId });
     }

@@ -2,3 +2,4 @@ mangas
 config.json
 .env
 db.kv*
+try*

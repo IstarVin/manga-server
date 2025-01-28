@@ -6,6 +6,7 @@
   "imports": {
     "@oak/oak": "jsr:@oak/oak@^17.1.4",
     "@omer/object": "jsr:@omer/object@^1.0.0",
+    "@std/cli": "jsr:@std/cli@^1.0.11",
     "@std/dotenv": "jsr:@std/dotenv@^0.225.3",
     "@std/fs": "jsr:@std/fs@^1.0.10",
     "@std/path": "jsr:@std/path@^1.0.8",
