@@ -18,6 +18,8 @@ import { MangaSchema, ChapterSchema } from "./models.ts";
 import { join } from "@std/path/join";
 import StreamZip from "node-stream-zip";
 import { z } from "zod";
+import { Status } from "jsr:@oak/commons@1/status";
+import { createErrorMessage } from "./errors.ts";
 
 function preprocessManga(manga: MangaSchema) {
   return {
@@ -68,7 +70,7 @@ const pageRouter = new Router<{ manga: MangaSchema; chapter: ChapterSchema }>({
     const pickedEntry = filteredEntries[Number(ctx.params.pageId) - 1];
 
     if (!pickedEntry) {
-      ctx.response.status = 404;
+      ctx.response.status = Status.NotFound;
       return;
     }
 
@@ -88,7 +90,7 @@ const chapterRouter = new Router<{
     const index = Number(chapId);
     const chapter = await getChapterWithNumber(index, ctx.state.manga.id);
     if (!chapter) {
-      ctx.response.status = 400;
+      ctx.response.status = Status.BadRequest;
       return;
     }
     ctx.state.chapter = chapter;
@@ -109,7 +111,7 @@ const mangaRouter = new Router<{ manga: MangaSchema }>({ prefix: "/manga" })
   .param("id", async (id, ctx, next) => {
     const manga = await getManga(Number(id));
     if (manga === null) {
-      ctx.response.status = 400;
+      ctx.response.status = Status.BadRequest;
       return;
     }
 
@@ -127,7 +129,7 @@ const mangaRouter = new Router<{ manga: MangaSchema }>({ prefix: "/manga" })
     const manga = ctx.state.manga;
 
     if (!manga.cover) {
-      ctx.response.status = 400;
+      ctx.response.status = Status.BadRequest;
       return;
     }
 
@@ -143,7 +145,7 @@ const categoryRouter = new Router<{ category: string }>({ prefix: "/category" })
     const categories = await getCategories();
     const pickedCategory = categories[index];
     if (!pickedCategory) {
-      ctx.response.status = 400;
+      ctx.response.status = Status.BadRequest;
       return;
     }
     ctx.state.category = pickedCategory;
@@ -174,7 +176,11 @@ const categoryRouter = new Router<{ category: string }>({ prefix: "/category" })
     });
     const post = zCategoryPost.safeParse(await ctx.request.body.json());
     if (post.error) {
-      ctx.response.status = 400;
+      ctx.response.status = Status.BadRequest;
+      ctx.response.body = createErrorMessage(
+        "Invalid passed body",
+        post.error.issues
+      );
       return;
     }
 

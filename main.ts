@@ -1,11 +1,10 @@
-import { Application } from "@oak/oak";
+import { Application, Status, isHttpError } from "@oak/oak";
 import config from "./src/config.ts";
 import { addCategory, getAllMangas } from "./src/db.ts";
 import { apiRouter } from "./src/routes.ts";
 import { scanLibrary } from "./src/server.ts";
 import { syncTachidesk } from "./src/tachidesk.ts";
-import { ChapterSchema, MangaSchema } from "./src/models.ts";
-import { z } from "zod";
+import { createErrorMessage } from "./src/errors.ts";
 
 async function scanAndUpdate() {
   await scanLibrary(config.mangasPath);
@@ -19,16 +18,20 @@ async function scanAndUpdate() {
   );
 }
 
-// setInterval(async () => {
-//   const start = Date.now();
-//   await scanAndUpdate();
-//   console.log("Updated", new Date(Date.now() - start).getMilliseconds());
-// }, 4000);
 await scanAndUpdate();
 
-const app = new Application();
-
-app.use(apiRouter.routes());
+const app = new Application()
+  .use(async (ctx, next) => {
+    try {
+      await next();
+    } catch (e) {
+      if (isHttpError(e)) {
+        ctx.response.status = Status.BadRequest;
+        ctx.response.body = createErrorMessage("Invalid request", e.message);
+      }
+    }
+  })
+  .use(apiRouter.routes());
 
 await addCategory("eyy");
 await addCategory("23er");
