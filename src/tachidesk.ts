@@ -1,7 +1,7 @@
 import { join } from "@std/path";
 import config from "./config.ts";
 import { ChapterSchema, MangaSchema } from "./models.ts";
-import { downloadCover, getMangaPath } from "./utils.ts";
+import { downloadCover, getMangaPath, removeScanlator } from "./utils.ts";
 import { getMangaChapters, updateChapter, updateManga } from "./db.ts";
 import { slugify } from "@std/text/unstable-slugify";
 
@@ -53,6 +53,7 @@ export async function syncTachidesk(manga: MangaSchema) {
                 name
                 uploadDate
                 scanlator
+                pageCount
               }
             }
           }
@@ -97,17 +98,27 @@ export async function syncTachidesk(manga: MangaSchema) {
   updateManga(mangaReturn);
 
   const chapters = await getMangaChapters(manga.id);
-  const chaptersSlug = chapters.map((v) => slugify(v.pathName));
+  const chaptersSlug = pickedManga.chapters.nodes.map((v) => slugify(v.name));
 
-  for (const chapter of pickedManga.chapters.nodes) {
-    const index = chaptersSlug.findIndex((v) => v == slugify(chapter.name));
-    const pickedChaper = chapters[index];
+  for (const chapter of chapters) {
+    const index = chaptersSlug.findIndex(
+      (v) => v == slugify(removeScanlator(chapter.pathName))
+    );
+    const pickedChaper = pickedManga.chapters.nodes[index];
+
+    if (!pickedChaper) {
+      console.error("error getting info for", chapter.pathName, manga.pathName);
+
+      continue;
+    }
+
     await updateChapter(
       {
-        ...pickedChaper,
-        title: chapter.name,
-        uploadDate: new Date(Number(chapter.uploadDate)),
-        scanlator: chapter.scanlator,
+        ...chapter,
+        title: pickedChaper.name,
+        uploadDate: new Date(Number(pickedChaper.uploadDate)),
+        scanlator: pickedChaper.scanlator,
+        pageCount: pickedChaper.pageCount,
       },
       manga.id
     );

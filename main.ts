@@ -1,24 +1,23 @@
 import { Application, Status, isHttpError } from "@oak/oak";
 import config from "./src/config.ts";
-import { addCategory, getAllMangas } from "./src/db.ts";
+import { addCategory } from "./src/db.ts";
 import { apiRouter } from "./src/routes.ts";
 import { scanLibrary } from "./src/server.ts";
-import { syncTachidesk } from "./src/tachidesk.ts";
 import { createErrorMessage } from "./src/errors.ts";
 
 async function scanAndUpdate() {
   await scanLibrary(config.mangasPath);
 
-  await Promise.all(
-    (
-      await getAllMangas()
-    ).map(async (v) => {
-      await syncTachidesk(v);
-    })
-  );
+  // await Promise.all(
+  //   (
+  //     await getAllMangas()
+  //   ).map(async (v) => {
+  //     await syncTachidesk(v);
+  //   })
+  // );
 }
 
-await scanAndUpdate();
+scanAndUpdate();
 
 const app = new Application()
   .use(async (ctx, next) => {

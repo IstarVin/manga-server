@@ -6,8 +6,12 @@ export type Config = {
   serverAddress: string;
   configPath: string;
   mangasPath: string;
+  dbPath: string;
 
   tachideskGraphQLUrl: string;
+  deepScan?: boolean;
+  rescanManga?: boolean;
+  rescanChapters?: boolean;
 };
 
 function setupConfigFile(path: string, defaultConfig: Config): Config {
@@ -24,8 +28,12 @@ const defaultConfig: Config = {
   serverAddress: "0.0.0.0:8008",
   configPath: ".",
   mangasPath: "./mangas",
+  dbPath: "./db.kv",
 
   tachideskGraphQLUrl: "http://localhost:4567/api/graphql",
+  deepScan: false,
+  rescanChapters: false,
+  rescanManga: false,
 };
 
 const configFilePath = join(defaultConfig.configPath, "config.json");

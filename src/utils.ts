@@ -74,3 +74,25 @@ export async function downloadCover(url: string, filePath: string) {
   const fileData = new Uint8Array(await response.arrayBuffer());
   await Deno.writeFile(filePath + "." + fileExtension, fileData);
 }
+
+export function removeScanlator(title: string): string {
+  const splitTtile = title.split("_");
+  const splitTtile1 = splitTtile[1]?.toLowerCase();
+  if (
+    splitTtile.length > 1 &&
+    (splitTtile1.startsWith("ch") || splitTtile1 == "prologue") &&
+    !splitTtile[0].toLowerCase().includes("chapter")
+  ) {
+    return splitTtile.slice(1).join("_");
+  }
+  return title;
+}
+
+export function createKeyValueObject<T extends string>(
+  keys: T[]
+): Record<T, T> {
+  return keys.reduce((obj, key) => {
+    obj[key] = key;
+    return obj;
+  }, {} as Record<T, T>);
+}

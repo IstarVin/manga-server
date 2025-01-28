@@ -83,9 +83,7 @@ const pageRouter = new Router<{ manga: MangaSchema; chapter: ChapterSchema }>({
 const chapterRouter = new Router<{
   chapter: ChapterSchema;
   manga: MangaSchema;
-}>({
-  prefix: "/chapter",
-})
+}>({ prefix: "/chapter" })
   .param("chapId", async (chapId, ctx, next) => {
     const index = Number(chapId);
     const chapter = await getChapterWithNumber(index, ctx.state.manga.id);
