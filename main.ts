@@ -4,6 +4,8 @@ import { addCategory, getAllMangas } from "./src/db.ts";
 import { apiRouter } from "./src/routes.ts";
 import { scanLibrary } from "./src/server.ts";
 import { syncTachidesk } from "./src/tachidesk.ts";
+import { ChapterSchema, MangaSchema } from "./src/models.ts";
+import { z } from "zod";
 
 async function scanAndUpdate() {
   await scanLibrary(config.mangasPath);

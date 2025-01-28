@@ -1,5 +1,6 @@
 import { Router } from "@oak/oak";
 import {
+  addMangaToCategory,
   getAllMangas,
   getCategories,
   getChapterWithNumber,
@@ -16,6 +17,7 @@ import {
 import { MangaSchema, ChapterSchema } from "./models.ts";
 import { join } from "@std/path/join";
 import StreamZip from "node-stream-zip";
+import { z } from "zod";
 
 function preprocessManga(manga: MangaSchema) {
   return {
@@ -31,9 +33,11 @@ function preprocessChapter(chapter: ChapterSchema) {
   };
 }
 
-const pageRouter = new Router({ prefix: "/page" })
+const pageRouter = new Router<{ manga: MangaSchema; chapter: ChapterSchema }>({
+  prefix: "/page",
+})
   .get("/all", (ctx) => {
-    const pageCount = ctx.state.chapter.pageCount as number;
+    const pageCount = ctx.state.chapter.pageCount;
     const pages = [];
 
     const mangaId = ctx.params.id;
@@ -48,8 +52,8 @@ const pageRouter = new Router({ prefix: "/page" })
     ctx.response.body = pages;
   })
   .get("/:pageId", async (ctx) => {
-    const manga = ctx.state.manga as MangaSchema;
-    const chapter = ctx.state.chapter as ChapterSchema;
+    const manga = ctx.state.manga;
+    const chapter = ctx.state.chapter;
 
     const chapterPath = getChapterPath(manga, chapter);
 
@@ -74,7 +78,12 @@ const pageRouter = new Router({ prefix: "/page" })
     zip.close();
   });
 
-const chapterRouter = new Router({ prefix: "/chapter" })
+const chapterRouter = new Router<{
+  chapter: ChapterSchema;
+  manga: MangaSchema;
+}>({
+  prefix: "/chapter",
+})
   .param("chapId", async (chapId, ctx, next) => {
     const index = Number(chapId);
     const chapter = await getChapterWithNumber(index, ctx.state.manga.id);
@@ -86,7 +95,7 @@ const chapterRouter = new Router({ prefix: "/chapter" })
     await next();
   })
   .get("/all", async (ctx) => {
-    const manga = ctx.state.manga as MangaSchema;
+    const manga = ctx.state.manga;
     ctx.response.body = (await getMangaChapters(manga.id)).sort(
       (a, b) => a.chapterNumber - b.chapterNumber
     );
@@ -96,11 +105,12 @@ const chapterRouter = new Router({ prefix: "/chapter" })
   })
   .get("/:chapId", pageRouter.routes());
 
-const mangaRouter = new Router({ prefix: "/manga" })
+const mangaRouter = new Router<{ manga: MangaSchema }>({ prefix: "/manga" })
   .param("id", async (id, ctx, next) => {
     const manga = await getManga(Number(id));
     if (manga === null) {
       ctx.response.status = 400;
+      return;
     }
 
     ctx.state.manga = manga;
@@ -114,7 +124,7 @@ const mangaRouter = new Router({ prefix: "/manga" })
     ctx.response.body = preprocessManga(ctx.state.manga);
   })
   .get("/:id/cover", (ctx) => {
-    const manga = ctx.state.manga as MangaSchema;
+    const manga = ctx.state.manga;
 
     if (!manga.cover) {
       ctx.response.status = 400;
@@ -127,7 +137,7 @@ const mangaRouter = new Router({ prefix: "/manga" })
   })
   .get("/:id", chapterRouter.routes());
 
-const categoryRouter = new Router({ prefix: "/category" })
+const categoryRouter = new Router<{ category: string }>({ prefix: "/category" })
   .param("id", async (id, ctx, next) => {
     const index = Number(id) - 1;
     const categories = await getCategories();
@@ -159,8 +169,18 @@ const categoryRouter = new Router({ prefix: "/category" })
     };
   })
   .post("/:id", async (ctx) => {
-    console.log(await ctx.request.body.json());
-    ctx.response.body = await ctx.request.body.json();
+    const zCategoryPost = z.object({
+      mangaId: z.number(),
+    });
+    const post = zCategoryPost.safeParse(await ctx.request.body.json());
+    if (post.error) {
+      ctx.response.status = 400;
+      return;
+    }
+
+    await addMangaToCategory(post.data.mangaId, ctx.state.category);
+
+    ctx.response.status = 200;
   });
 
 export const apiRouter = new Router({ prefix: "/api" })
