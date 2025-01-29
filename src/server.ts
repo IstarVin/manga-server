@@ -34,8 +34,7 @@ export async function scanLibrary(options?: { deep?: boolean }) {
         v.name.endsWith(".cbz")
       ).length;
 
-      const dbChapterCount =
-        1 || (await db.getMangaChapters(manga.name)).length;
+      const dbChapterCount = (await db.getMangaChapters(manga.name)).length;
 
       if (!config.rescanManga) {
         if (await db.isMangaAdded(manga.name)) {
@@ -61,6 +60,8 @@ export async function scanLibrary(options?: { deep?: boolean }) {
 
       const mangaId = await db.addManga(mangaDb);
 
+      mangaDb.id = mangaId;
+
       const chapters: MakeOptional<ChapterSchema, "chapterNumber">[] = [];
 
       let c = 0;
@@ -72,11 +73,8 @@ export async function scanLibrary(options?: { deep?: boolean }) {
           chapter.name.includes("cover") &&
           chapter.name.split(".")[0] === "cover"
         ) {
-          await db.updateManga({
-            ...mangaDb,
-            id: mangaId,
-            cover: chapter.name,
-          });
+          mangaDb.cover = chapter.name;
+          await db.updateManga(mangaDb as MangaSchema);
         }
 
         if (chapterExt != ".cbz") continue;

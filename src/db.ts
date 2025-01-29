@@ -114,8 +114,13 @@ export async function getMangaInSource(sourceName: string) {
 
 export const addManga = retry(
   async (manga: MakeOptional<MangaSchema, "id">) => {
+    const id = await mangaToId(manga.pathName);
     const mangaCount = await db.get<bigint>([P.mangaCount]);
-    manga.id = Number(mangaCount.value);
+    if (id) {
+      manga.id = id;
+    } else {
+      manga.id = Number(mangaCount.value);
+    }
 
     const mangaIdKey = [P.mangas, manga.id];
     const mangaPathKey = [P.mangasByPath, manga.pathName];
