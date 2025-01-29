@@ -1,6 +1,7 @@
 import config from "./config.ts";
 import { ChapterSchema, MangaSchema } from "./models.ts";
 import { createKeyValueObject, MakeOptional } from "./utils.ts";
+import { retry } from "@mr/retry";
 
 const P = createKeyValueObject([
   "mangaCount",
@@ -111,17 +112,15 @@ export async function getMangaInSource(sourceName: string) {
   return await dereference(mangas, getManga);
 }
 
-export async function addManga(manga: MakeOptional<MangaSchema, "id">) {
-  let res = { ok: false };
-  let runCount = 0;
-  while (!res.ok) {
+export const addManga = retry(
+  async (manga: MakeOptional<MangaSchema, "id">) => {
     const mangaCount = await db.get<bigint>([P.mangaCount]);
     manga.id = Number(mangaCount.value);
 
     const mangaIdKey = [P.mangas, manga.id];
     const mangaPathKey = [P.mangasByPath, manga.pathName];
 
-    res = await db
+    const res = await db
       .atomic()
       .check(mangaCount)
       .set(mangaPathKey, manga.id)
@@ -130,14 +129,9 @@ export async function addManga(manga: MakeOptional<MangaSchema, "id">) {
       .sum([P.mangaCount], 1n)
       .commit();
 
-    if (runCount >= 30) {
-      break;
-    }
     if (!res.ok) {
-      console.log("Adding again", runCount);
-
-      runCount++;
-      continue;
+      console.log("Adding again");
+      throw new Error("Not ok");
     }
 
     await addSource(manga.source);
@@ -145,10 +139,11 @@ export async function addManga(manga: MakeOptional<MangaSchema, "id">) {
     await addMangaToCategory(manga.id, "Default");
 
     await db.set([P.mangaSource, manga.source, manga.id], manga.id);
-  }
 
-  return manga.id!;
-}
+    return manga.id;
+  },
+  { attempts: 20, delay: 10 }
+);
 
 export async function updateManga(manga: MangaSchema) {
   const mangaKey = [P.mangas, manga.id];

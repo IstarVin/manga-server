@@ -1,12 +1,12 @@
-import { extname, join } from "@std/path";
-import { Spinner } from "@topcli/spinner";
+import { join, extname } from "@std/path";
 import StreamZip from "node-stream-zip";
-import { setImmediate } from "node:timers";
-import config from "./config.ts";
 import * as db from "./db.ts";
+import { MakeOptional, msToTime, smartSort } from "./utils.ts";
 import { ChapterSchema, MangaSchema } from "./models.ts";
 import { syncTachidesk } from "./tachidesk.ts";
-import { MakeOptional, msToTime, smartSort } from "./utils.ts";
+import config from "./config.ts";
+import { Spinner } from "@topcli/spinner";
+import { setImmediate } from "node:timers";
 
 export async function scanLibrary(path: string, options?: { deep?: boolean }) {
   if (options?.deep) {

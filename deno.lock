@@ -4,11 +4,8 @@
     "jsr:@mr/retry@^0.0.3": "0.0.3",
     "jsr:@oak/commons@1": "1.0.0",
     "jsr:@oak/oak@^17.1.4": "17.1.4",
-    "jsr:@omer/object@1": "1.0.0",
     "jsr:@std/assert@1": "1.0.11",
-    "jsr:@std/async@^1.0.10": "1.0.10",
     "jsr:@std/bytes@1": "1.0.4",
-    "jsr:@std/cli@^1.0.11": "1.0.11",
     "jsr:@std/crypto@1": "1.0.3",
     "jsr:@std/dotenv@~0.225.3": "0.225.3",
     "jsr:@std/encoding@1": "1.0.6",
@@ -51,20 +48,11 @@
         "npm:path-to-regexp"
       ]
     },
-    "@omer/object@1.0.0": {
-      "integrity": "5fe1b843a00c59686eef5dd4defb57144c5895b1f240a0442e5e108ac55bde88"
-    },
     "@std/assert@1.0.11": {
       "integrity": "2461ef3c368fe88bc60e186e7744a93112f16fd110022e113a0849e94d1c83c1"
     },
-    "@std/async@1.0.10": {
-      "integrity": "2ff1b1c7d33d1416159989b0f69e59ec7ee8cb58510df01e454def2108b3dbec"
-    },
     "@std/bytes@1.0.4": {
       "integrity": "11a0debe522707c95c7b7ef89b478c13fb1583a7cfb9a85674cd2cc2e3a28abc"
-    },
-    "@std/cli@1.0.11": {
-      "integrity": "ec219619fdcd31bcf0d8e53bee1e2706ec9a02f70255365a094f69755dadd340"
     },
     "@std/crypto@1.0.3": {
       "integrity": "a2a32f51ddef632d299e3879cd027c630dcd4d1d9a5285d6e6788072f4e51e7f"
@@ -166,9 +154,6 @@
     "dependencies": [
       "jsr:@mr/retry@^0.0.3",
       "jsr:@oak/oak@^17.1.4",
-      "jsr:@omer/object@1",
-      "jsr:@std/async@^1.0.10",
-      "jsr:@std/cli@^1.0.11",
       "jsr:@std/dotenv@~0.225.3",
       "jsr:@std/fs@^1.0.10",
       "jsr:@std/path@^1.0.8",
