@@ -3,14 +3,11 @@ import config from "./src/config.ts";
 import { createErrorMessage } from "./src/errors.ts";
 import { apiRouter } from "./src/routes.ts";
 import { scanLibrary } from "./src/server.ts";
-import { runAndSetInterval } from "./src/utils.ts";
+// import { runAndSetInterval } from "./src/utils.ts";
 
-runAndSetInterval(
-  () => {
-    scanLibrary();
-  },
-  { delay: config.scanInterval }
-);
+setInterval(() => {
+  scanLibrary({ rescanManga: config.rescanManga, deep: config.deepScan });
+}, config.scanInterval);
 
 const app = new Application()
   .use(async (ctx, next) => {

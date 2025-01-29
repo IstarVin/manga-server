@@ -7,6 +7,7 @@ import * as db from "./db.ts";
 import { createErrorMessage } from "./errors.ts";
 import { ChapterSchema, MangaSchema } from "./models.ts";
 import * as utils from "./utils.ts";
+import { scanLibrary } from "./server.ts";
 
 function preprocessManga(manga: MangaSchema) {
   return {
@@ -194,4 +195,13 @@ const categoryRouter = new Router<{ category: string }>({ prefix: "/category" })
 
 export const apiRouter = new Router({ prefix: "/api" })
   .use(mangaRouter.routes())
-  .use(categoryRouter.routes());
+  .use(categoryRouter.routes())
+  .get("/library/scan", (ctx) => {
+    const deep = ctx.request.url.searchParams.get("deep") === "true";
+    const rescanManga =
+      ctx.request.url.searchParams.get("rescanManga") === "true";
+
+    scanLibrary({ deep, rescanManga });
+
+    ctx.response.body = "Scanning in progress";
+  });

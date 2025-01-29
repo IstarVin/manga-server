@@ -8,10 +8,17 @@ import config from "./config.ts";
 import { Spinner } from "@topcli/spinner";
 import { setImmediate } from "node:timers";
 
-export async function scanLibrary(options?: { deep?: boolean }) {
-  if (options?.deep) {
-    console.log("eyy");
+let scanning = false;
+
+export async function scanLibrary(options?: {
+  rescanManga?: boolean;
+  deep?: boolean;
+}) {
+  if (scanning) {
+    return "Scanning in progress";
   }
+
+  scanning = true;
 
   let totalTimeMs = 0;
 
@@ -36,7 +43,7 @@ export async function scanLibrary(options?: { deep?: boolean }) {
 
       const dbChapterCount = (await db.getMangaChapters(manga.name)).length;
 
-      if (!config.rescanManga) {
+      if (!options?.rescanManga) {
         if (await db.isMangaAdded(manga.name)) {
           if (
             chapterCount == dbChapterCount ||
@@ -80,7 +87,7 @@ export async function scanLibrary(options?: { deep?: boolean }) {
         if (chapterExt != ".cbz") continue;
 
         if (
-          !config.rescanChapters &&
+          !options?.deep &&
           (await db.isChapterAdded(mangaId, chapter.name))
         ) {
           continue;
@@ -97,7 +104,7 @@ export async function scanLibrary(options?: { deep?: boolean }) {
           uploadDate,
         };
 
-        if (config.deepScan) {
+        if (options?.deep) {
           const zip = new StreamZip.async({ file: chapterPath });
 
           const pageCount = Object.keys(await zip.entries()).filter(
@@ -135,4 +142,5 @@ export async function scanLibrary(options?: { deep?: boolean }) {
     }
   }
   console.log("Finished library scan:", msToTime(totalTimeMs));
+  scanning = false;
 }
