@@ -27,15 +27,31 @@ export async function scanLibrary(options?: { deep?: boolean }) {
     for await (const manga of Deno.readDir(sourcePath)) {
       if (manga.isFile) continue;
 
-      if (!config.rescanManga && (await db.isMangaAdded(manga.name))) {
-        continue;
+      const mangaPath = join(sourcePath, manga.name);
+      const chaptersDir = Array.from(Deno.readDirSync(mangaPath));
+
+      const chapterCount = chaptersDir.filter((v) =>
+        v.name.endsWith(".cbz")
+      ).length;
+
+      const dbChapterCount =
+        1 || (await db.getMangaChapters(manga.name)).length;
+
+      if (!config.rescanManga) {
+        if (await db.isMangaAdded(manga.name)) {
+          if (
+            chapterCount == dbChapterCount ||
+            (await db.getManga(manga.name))?.status === "COMPLETED"
+          ) {
+            console.log("skipped", manga.name);
+            continue;
+          }
+        }
       }
 
       const startDate = Date.now();
       const spinner = new Spinner({ color: "yellow" });
       spinner.start(`Adding ${manga.name}`);
-
-      const mangaPath = join(sourcePath, manga.name);
 
       const mangaDb: MakeOptional<MangaSchema, "id"> = {
         pathName: manga.name,
@@ -46,14 +62,6 @@ export async function scanLibrary(options?: { deep?: boolean }) {
       const mangaId = await db.addManga(mangaDb);
 
       const chapters: MakeOptional<ChapterSchema, "chapterNumber">[] = [];
-
-      const chaptersDir = Array.from(Deno.readDirSync(mangaPath));
-
-      const chapterCount = chaptersDir.filter((v) =>
-        v.name.endsWith(".cbz")
-      ).length;
-
-      spinner.text = `Adding ${manga.name} 0/${chapterCount}`;
 
       let c = 0;
 

@@ -13,14 +13,14 @@ const P = createKeyValueObject([
   "mangasByPath",
   "chapters",
   "chapterNumber",
-  "addedManga",
-  "addedChapter",
 ]);
 
 export const db = await Deno.openKv(config.dbPath);
 // export const db = await Deno.openKv(":memory:");
 
-await db.set([P.mangaCount], new Deno.KvU64(1n));
+if (!(await db.get([P.mangaCount])).versionstamp) {
+  await db.set([P.mangaCount], new Deno.KvU64(1n));
+}
 
 type MangaIdentifier = number | string;
 
@@ -125,7 +125,6 @@ export const addManga = retry(
       .check(mangaCount)
       .set(mangaPathKey, manga.id)
       .set(mangaIdKey, manga)
-      .set([P.addedManga, manga.pathName], manga.id)
       .sum([P.mangaCount], 1n)
       .commit();
 
@@ -196,7 +195,6 @@ export async function addChapter(
     .check({ key: chapterKey, versionstamp: null })
     .set([P.chapters, mangaKey, chapter.pathName], chapter)
     .set([P.chapterNumber, mangaKey, chapter.chapterNumber], chapter.pathName)
-    .set([P.addedChapter, mangaKey, chapter.pathName], chapter.chapterNumber)
     .commit();
 }
 
@@ -242,21 +240,8 @@ export async function getChapter(
     .value;
 }
 
-export async function addAddedManga(title: string) {
-  await db.set([P.addedManga, title], title);
-}
-
 export async function isMangaAdded(title: string) {
-  return Boolean((await db.get([P.addedManga, title])).versionstamp);
-}
-
-export async function addAddedChapter(
-  mangaIdentifier: MangaIdentifier,
-  chapterPathName: string
-) {
-  const mangaIdKey = await mangaToId(mangaIdentifier);
-  if (mangaIdKey === null) return;
-  await db.set([P.addedChapter, mangaIdKey, chapterPathName], chapterPathName);
+  return Boolean((await db.get([P.mangasByPath, title])).versionstamp);
 }
 
 export async function isChapterAdded(
@@ -266,6 +251,6 @@ export async function isChapterAdded(
   const mangaIdKey = await mangaToId(mangaIdentifier);
   if (mangaIdKey === null) return;
   return Boolean(
-    (await db.get([P.addedChapter, mangaIdKey, chapterPathName])).versionstamp
+    (await db.get([P.chapters, mangaIdKey, chapterPathName])).versionstamp
   );
 }
