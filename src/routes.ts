@@ -58,6 +58,7 @@ const pageRouter = new Router<{ manga: MangaSchema; chapter: ChapterSchema }>({
 
     if (!pickedEntry) {
       ctx.response.status = Status.NotFound;
+      ctx.response.body = createErrorMessage("Not found", "Page not found");
       return;
     }
 
@@ -76,6 +77,10 @@ const chapterRouter = new Router<{
     const chapter = await db.getChapterWithNumber(index, ctx.state.manga.id);
     if (!chapter) {
       ctx.response.status = Status.BadRequest;
+      ctx.response.body = createErrorMessage(
+        "Invalid request",
+        "no chapter found wth the chapId"
+      );
       return;
     }
     ctx.state.chapter = chapter;
@@ -97,6 +102,10 @@ const mangaRouter = new Router<{ manga: MangaSchema }>({ prefix: "/manga" })
     const manga = await db.getManga(Number(id));
     if (manga === null) {
       ctx.response.status = Status.BadRequest;
+      ctx.response.body = createErrorMessage(
+        "Not found",
+        "No manga found with the givin id"
+      );
       return;
     }
 
@@ -136,6 +145,10 @@ const categoryRouter = new Router<{ category: string }>({ prefix: "/category" })
     const pickedCategory = categories[index];
     if (!pickedCategory) {
       ctx.response.status = Status.BadRequest;
+      ctx.response.body = createErrorMessage(
+        "Not found",
+        "no category found with the givin id"
+      );
       return;
     }
     ctx.state.category = pickedCategory;
