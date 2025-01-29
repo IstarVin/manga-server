@@ -3,20 +3,14 @@ import config from "./src/config.ts";
 import { createErrorMessage } from "./src/errors.ts";
 import { apiRouter } from "./src/routes.ts";
 import { scanLibrary } from "./src/server.ts";
+import { runAndSetInterval } from "./src/utils.ts";
 
-async function scanAndUpdate() {
-  await scanLibrary(config.mangasPath);
-
-  // await Promise.all(
-  //   (
-  //     await getAllMangas()
-  //   ).map(async (v) => {
-  //     await syncTachidesk(v);
-  //   })
-  // );
-}
-
-scanAndUpdate();
+runAndSetInterval(
+  () => {
+    scanLibrary();
+  },
+  { delay: config.scanInterval }
+);
 
 const app = new Application()
   .use(async (ctx, next) => {

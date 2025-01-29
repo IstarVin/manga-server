@@ -107,3 +107,9 @@ export function msToTime(ms: number) {
   else if (Number(hours) < 24) return hours + " Hrs";
   else return days + " Days";
 }
+
+export function runAndSetInterval(f: () => void, opts?: { delay?: number }) {
+  const delay = opts?.delay || 43200000; // 12 hours
+  f();
+  setInterval(f, delay);
+}

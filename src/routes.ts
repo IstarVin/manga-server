@@ -117,6 +117,7 @@ const mangaRouter = new Router<{ manga: MangaSchema }>({ prefix: "/manga" })
 
     if (!manga.cover) {
       ctx.response.status = Status.BadRequest;
+      ctx.response.body = "No manga cover found";
       return;
     }
 

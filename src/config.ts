@@ -12,6 +12,7 @@ export type Config = {
   deepScan?: boolean;
   rescanManga?: boolean;
   rescanChapters?: boolean;
+  scanInterval: number;
 };
 
 function setupConfigFile(path: string, defaultConfig: Config): Config {
@@ -34,6 +35,7 @@ const defaultConfig: Config = {
   deepScan: false,
   rescanChapters: false,
   rescanManga: false,
+  scanInterval: 43200000, // 12 hours
 };
 
 const configFilePath = join(defaultConfig.configPath, "config.json");

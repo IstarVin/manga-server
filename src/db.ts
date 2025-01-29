@@ -17,8 +17,8 @@ const P = createKeyValueObject([
   "addedChapter",
 ]);
 
-// export const db = await Deno.openKv(config.dbPath);
-export const db = await Deno.openKv(":memory:");
+export const db = await Deno.openKv(config.dbPath);
+// export const db = await Deno.openKv(":memory:");
 
 await db.set([P.mangaCount], new Deno.KvU64(1n));
 
@@ -142,7 +142,7 @@ export const addManga = retry(
 
     return manga.id;
   },
-  { attempts: 20, delay: 10 }
+  { attempts: 20, delay: 0 }
 );
 
 export async function updateManga(manga: MangaSchema) {

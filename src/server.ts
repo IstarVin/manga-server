@@ -8,13 +8,17 @@ import config from "./config.ts";
 import { Spinner } from "@topcli/spinner";
 import { setImmediate } from "node:timers";
 
-export async function scanLibrary(path: string, options?: { deep?: boolean }) {
+export async function scanLibrary(options?: { deep?: boolean }) {
   if (options?.deep) {
     console.log("eyy");
   }
 
+  let totalTimeMs = 0;
+
+  const path = config.mangasPath;
+
   for await (const source of Deno.readDir(path)) {
-    if (source.isFile) return;
+    if (source.isFile) continue;
 
     const sourcePath = join(path, source.name);
 
@@ -42,6 +46,16 @@ export async function scanLibrary(path: string, options?: { deep?: boolean }) {
       const mangaId = await db.addManga(mangaDb);
 
       const chapters: MakeOptional<ChapterSchema, "chapterNumber">[] = [];
+
+      const chaptersDir = Array.from(Deno.readDirSync(mangaPath));
+
+      const chapterCount = chaptersDir.filter((v) =>
+        v.name.endsWith(".cbz")
+      ).length;
+
+      spinner.text = `Adding ${manga.name} 0/${chapterCount}`;
+
+      let c = 0;
 
       for await (const chapter of Deno.readDir(mangaPath)) {
         const chapterExt = extname(chapter.name);
@@ -91,6 +105,10 @@ export async function scanLibrary(path: string, options?: { deep?: boolean }) {
 
         chapters.push(newChap);
 
+        spinner.text = `Adding ${manga.name} ${c}/${chapterCount}`;
+
+        c++;
+
         await new Promise((res) => setImmediate(res));
       }
 
@@ -102,11 +120,13 @@ export async function scanLibrary(path: string, options?: { deep?: boolean }) {
           })
       );
 
-      spinner.succeed(
-        `Inserted ${manga.name}: ${msToTime(Date.now() - startDate)}`
-      );
+      const timeTookMs = Date.now() - startDate;
+      totalTimeMs += timeTookMs;
+
+      spinner.succeed(`Inserted ${manga.name}: ${msToTime(timeTookMs)}`);
 
       syncTachidesk({ ...mangaDb, id: mangaId });
     }
   }
+  console.log("Finished library scan:", msToTime(totalTimeMs));
 }
