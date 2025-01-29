@@ -1,6 +1,6 @@
-import { join } from "@std/path";
 import "@std/dotenv/load";
 import { existsSync } from "@std/fs";
+import { join } from "@std/path";
 
 export type Config = {
   serverAddress: string;

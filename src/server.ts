@@ -1,35 +1,35 @@
-import { join, extname } from "@std/path";
+import { extname, join } from "@std/path";
+import { Spinner } from "@topcli/spinner";
 import StreamZip from "node-stream-zip";
-import {
-  addSource,
-  addManga,
-  addChapter,
-  updateManga,
-  isMangaAdded,
-  isChapterAdded,
-} from "./db.ts";
-import { MakeOptional, msToTime, smartSort } from "./utils.ts";
+import { setImmediate } from "node:timers";
+import config from "./config.ts";
+import * as db from "./db.ts";
 import { ChapterSchema, MangaSchema } from "./models.ts";
 import { syncTachidesk } from "./tachidesk.ts";
-import config from "./config.ts";
+import { MakeOptional, msToTime, smartSort } from "./utils.ts";
 
 export async function scanLibrary(path: string, options?: { deep?: boolean }) {
   if (options?.deep) {
     console.log("eyy");
   }
-  for (const source of Deno.readDirSync(path)) {
-    if (source.isFile) continue;
+
+  for await (const source of Deno.readDir(path)) {
+    if (source.isFile) return;
 
     const sourcePath = join(path, source.name);
 
-    await addSource(source.name);
+    await db.addSource(source.name);
 
-    for (const manga of Deno.readDirSync(sourcePath)) {
+    for await (const manga of Deno.readDir(sourcePath)) {
       if (manga.isFile) continue;
 
-      if (!config.rescanManga && (await isMangaAdded(manga.name))) {
+      if (!config.rescanManga && (await db.isMangaAdded(manga.name))) {
         continue;
       }
+
+      const startDate = Date.now();
+      const spinner = new Spinner({ color: "yellow" });
+      spinner.start(`Adding ${manga.name}`);
 
       const mangaPath = join(sourcePath, manga.name);
 
@@ -39,27 +39,29 @@ export async function scanLibrary(path: string, options?: { deep?: boolean }) {
         status: "UNKNOWN",
       };
 
-      const mangaId = await addManga(mangaDb);
+      const mangaId = await db.addManga(mangaDb);
 
       const chapters: MakeOptional<ChapterSchema, "chapterNumber">[] = [];
 
-      const startDate = Date.now();
-
-      for (const chapter of Deno.readDirSync(mangaPath)) {
+      for await (const chapter of Deno.readDir(mangaPath)) {
         const chapterExt = extname(chapter.name);
 
         if (
           chapter.name.includes("cover") &&
           chapter.name.split(".")[0] === "cover"
         ) {
-          await updateManga({ ...mangaDb, id: mangaId, cover: chapter.name });
+          await db.updateManga({
+            ...mangaDb,
+            id: mangaId,
+            cover: chapter.name,
+          });
         }
 
         if (chapterExt != ".cbz") continue;
 
         if (
           !config.rescanChapters &&
-          (await isChapterAdded(mangaId, chapter.name))
+          (await db.isChapterAdded(mangaId, chapter.name))
         ) {
           continue;
         }
@@ -88,17 +90,19 @@ export async function scanLibrary(path: string, options?: { deep?: boolean }) {
         }
 
         chapters.push(newChap);
+
+        await new Promise((res) => setImmediate(res));
       }
 
       await Promise.all(
         chapters
           .sort((a, b) => smartSort(a.pathName, b.pathName))
           .map(async (v, i) => {
-            await addChapter({ ...v, chapterNumber: i + 1 }, mangaId);
+            await db.addChapter({ ...v, chapterNumber: i + 1 }, mangaId);
           })
       );
 
-      console.log(
+      spinner.succeed(
         `Inserted ${manga.name}: ${msToTime(Date.now() - startDate)}`
       );
 

@@ -16,8 +16,8 @@ const P = createKeyValueObject([
   "addedChapter",
 ]);
 
-export const db = await Deno.openKv(config.dbPath);
-// export const db = await Deno.openKv(":memory:");
+// export const db = await Deno.openKv(config.dbPath);
+export const db = await Deno.openKv(":memory:");
 
 await db.set([P.mangaCount], new Deno.KvU64(1n));
 
@@ -251,8 +251,8 @@ export async function addAddedManga(title: string) {
   await db.set([P.addedManga, title], title);
 }
 
-export async function isMangaAdded(pathName: string) {
-  return Boolean((await db.get([P.addedManga, pathName])).versionstamp);
+export async function isMangaAdded(title: string) {
+  return Boolean((await db.get([P.addedManga, title])).versionstamp);
 }
 
 export async function addAddedChapter(

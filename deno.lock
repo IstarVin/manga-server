@@ -1,10 +1,12 @@
 {
   "version": "4",
   "specifiers": {
+    "jsr:@mr/retry@^0.0.3": "0.0.3",
     "jsr:@oak/commons@1": "1.0.0",
     "jsr:@oak/oak@^17.1.4": "17.1.4",
     "jsr:@omer/object@1": "1.0.0",
     "jsr:@std/assert@1": "1.0.11",
+    "jsr:@std/async@^1.0.10": "1.0.10",
     "jsr:@std/bytes@1": "1.0.4",
     "jsr:@std/cli@^1.0.11": "1.0.11",
     "jsr:@std/crypto@1": "1.0.3",
@@ -17,11 +19,15 @@
     "jsr:@std/path@1": "1.0.8",
     "jsr:@std/path@^1.0.8": "1.0.8",
     "jsr:@std/text@^1.0.10": "1.0.10",
+    "npm:@topcli/spinner@^2.1.2": "2.1.2",
     "npm:node-stream-zip@^1.15.0": "1.15.0",
     "npm:path-to-regexp@^6.3.0": "6.3.0",
     "npm:zod@^3.24.1": "3.24.1"
   },
   "jsr": {
+    "@mr/retry@0.0.3": {
+      "integrity": "5a9ea4956d73148530040ff6ff8b7bc254ccd1b4a58d24ac6ca47947deeeecaa"
+    },
     "@oak/commons@1.0.0": {
       "integrity": "49805b55603c3627a9d6235c0655aa2b6222d3036b3a13ff0380c16368f607ac",
       "dependencies": [
@@ -50,6 +56,9 @@
     },
     "@std/assert@1.0.11": {
       "integrity": "2461ef3c368fe88bc60e186e7744a93112f16fd110022e113a0849e94d1c83c1"
+    },
+    "@std/async@1.0.10": {
+      "integrity": "2ff1b1c7d33d1416159989b0f69e59ec7ee8cb58510df01e454def2108b3dbec"
     },
     "@std/bytes@1.0.4": {
       "integrity": "11a0debe522707c95c7b7ef89b478c13fb1583a7cfb9a85674cd2cc2e3a28abc"
@@ -89,11 +98,65 @@
     }
   },
   "npm": {
+    "@topcli/spinner@2.1.2": {
+      "integrity": "sha512-vpkhANKccY+zzu6QeavBM+VO/nhCYT7HJiKZTa86uTc3RzJ+pOkt1SgGLZExAzXM8tmDHGfBwXQQaRBak42+EA==",
+      "dependencies": [
+        "@topcli/wcwidth",
+        "ansi-regex",
+        "cli-cursor",
+        "cli-spinners",
+        "kleur",
+        "strip-ansi"
+      ]
+    },
+    "@topcli/wcwidth@1.0.1": {
+      "integrity": "sha512-fS1k22N6DU5DpDfw61Kz0GDb3hNmJAgDcc8fNWSGBETKuuJnx+0fGSeL0w6dL1YRRjSOxWQJLiwW+byfv84EyQ=="
+    },
+    "ansi-regex@6.1.0": {
+      "integrity": "sha512-7HSX4QQb4CspciLpVFwyRe79O3xsIZDDLER21kERQ71oaPodF8jL725AgJMFAYbooIqolJoRLuM81SpeUkpkvA=="
+    },
+    "cli-cursor@4.0.0": {
+      "integrity": "sha512-VGtlMu3x/4DOtIUwEkRezxUZ2lBacNJCHash0N0WeZDBS+7Ux1dm3XWAgWYxLJFMMdOeXMHXorshEFhbMSGelg==",
+      "dependencies": [
+        "restore-cursor"
+      ]
+    },
+    "cli-spinners@2.9.2": {
+      "integrity": "sha512-ywqV+5MmyL4E7ybXgKys4DugZbX0FC6LnwrhjuykIjnK9k8OQacQ7axGKnjDXWNhns0xot3bZI5h55H8yo9cJg=="
+    },
+    "kleur@4.1.5": {
+      "integrity": "sha512-o+NO+8WrRiQEE4/7nwRJhN1HWpVmJm511pBHUxPLtp0BUISzlBplORYSmTclCnJvQq2tKu/sgl3xVpkc7ZWuQQ=="
+    },
+    "mimic-fn@2.1.0": {
+      "integrity": "sha512-OqbOk5oEQeAZ8WXWydlu9HJjz9WVdEIvamMCcXmuqUYjTknH/sqsWvhQ3vgwKFRR1HpjvNBKQ37nbJgYzGqGcg=="
+    },
     "node-stream-zip@1.15.0": {
       "integrity": "sha512-LN4fydt9TqhZhThkZIVQnF9cwjU3qmUH9h78Mx/K7d3VvfRqqwthLwJEUOEL0QPZ0XQmNN7be5Ggit5+4dq3Bw=="
     },
+    "onetime@5.1.2": {
+      "integrity": "sha512-kbpaSSGJTWdAY5KPVeMOKXSrPtr8C8C7wodJbcsd51jRnmD+GZu8Y0VoU6Dm5Z4vWr0Ig/1NKuWRKf7j5aaYSg==",
+      "dependencies": [
+        "mimic-fn"
+      ]
+    },
     "path-to-regexp@6.3.0": {
       "integrity": "sha512-Yhpw4T9C6hPpgPeA28us07OJeqZ5EzQTkbfwuhsUg0c237RomFoETJgmp2sa3F/41gfLE6G5cqcYwznmeEeOlQ=="
+    },
+    "restore-cursor@4.0.0": {
+      "integrity": "sha512-I9fPXU9geO9bHOt9pHHOhOkYerIMsmVaWB0rA2AI9ERh/+x/i7MV5HKBNrg+ljO5eoPVgCcnFuRjJ9uH6I/3eg==",
+      "dependencies": [
+        "onetime",
+        "signal-exit"
+      ]
+    },
+    "signal-exit@3.0.7": {
+      "integrity": "sha512-wnD2ZE+l+SPC/uoS0vXeE9L1+0wuaMqKlfz9AMUo38JsyLSBWSFcHR1Rri62LZc12vLr1gb3jl7iwQhgwpAbGQ=="
+    },
+    "strip-ansi@7.1.0": {
+      "integrity": "sha512-iq6eVVI64nQQTRYq2KtEg2d2uU7LElhTJwsH4YzIHZshxlgZms/wIc4VoDQTlG/IvVIrBKG06CrZnp0qv7hkcQ==",
+      "dependencies": [
+        "ansi-regex"
+      ]
     },
     "zod@3.24.1": {
       "integrity": "sha512-muH7gBL9sI1nciMZV67X5fTKKBLtwpZ5VBp1vsOQzj1MhrBZ4wlVCm3gedKZWLp0Oyel8sIGfeiz54Su+OVT+A=="
@@ -101,13 +164,16 @@
   },
   "workspace": {
     "dependencies": [
+      "jsr:@mr/retry@^0.0.3",
       "jsr:@oak/oak@^17.1.4",
       "jsr:@omer/object@1",
+      "jsr:@std/async@^1.0.10",
       "jsr:@std/cli@^1.0.11",
       "jsr:@std/dotenv@~0.225.3",
       "jsr:@std/fs@^1.0.10",
       "jsr:@std/path@^1.0.8",
       "jsr:@std/text@^1.0.10",
+      "npm:@topcli/spinner@^2.1.2",
       "npm:node-stream-zip@^1.15.0",
       "npm:zod@^3.24.1"
     ]

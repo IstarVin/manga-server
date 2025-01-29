@@ -97,19 +97,6 @@ export function createKeyValueObject<T extends string>(
   }, {} as Record<T, T>);
 }
 
-// export function msToTime(duration: number): string {
-//   const milliseconds = Math.floor((duration % 1000) / 100),
-//     seconds = Math.floor((duration / 1000) % 60),
-//     minutes = Math.floor((duration / (1000 * 60)) % 60),
-//     hours = Math.floor((duration / (1000 * 60 * 60)) % 24);
-
-//   const hoursStr = hours < 10 ? "0" + hours : hours.toString();
-//   const minutesStr = minutes < 10 ? "0" + minutes : minutes.toString();
-//   const secondsStr = seconds < 10 ? "0" + seconds : seconds.toString();
-
-//   return hoursStr + ":" + minutesStr + ":" + secondsStr + "." + milliseconds;
-// }
-
 export function msToTime(ms: number) {
   const seconds = (ms / 1000).toFixed(1);
   const minutes = (ms / (1000 * 60)).toFixed(1);

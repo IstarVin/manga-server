@@ -1,9 +1,8 @@
 import { Application, Status, isHttpError } from "@oak/oak";
 import config from "./src/config.ts";
-import { addCategory } from "./src/db.ts";
+import { createErrorMessage } from "./src/errors.ts";
 import { apiRouter } from "./src/routes.ts";
 import { scanLibrary } from "./src/server.ts";
-import { createErrorMessage } from "./src/errors.ts";
 
 async function scanAndUpdate() {
   await scanLibrary(config.mangasPath);
@@ -31,9 +30,6 @@ const app = new Application()
     }
   })
   .use(apiRouter.routes());
-
-await addCategory("eyy");
-await addCategory("23er");
 
 console.log(`Listening to ${config.serverAddress}`);
 

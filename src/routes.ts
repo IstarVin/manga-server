@@ -1,36 +1,23 @@
 import { Router } from "@oak/oak";
-import {
-  addMangaToCategory,
-  getAllMangas,
-  getCategories,
-  getChapterWithNumber,
-  getManga,
-  getMangaChapters,
-  getMangasInCategory,
-} from "./db.ts";
-import {
-  extenionMimeMap,
-  getChapterPath,
-  getMangaPath,
-  omit,
-} from "./utils.ts";
-import { MangaSchema, ChapterSchema } from "./models.ts";
 import { join } from "@std/path/join";
+import { Status } from "jsr:@oak/commons@1/status";
 import StreamZip from "node-stream-zip";
 import { z } from "zod";
-import { Status } from "jsr:@oak/commons@1/status";
+import * as db from "./db.ts";
 import { createErrorMessage } from "./errors.ts";
+import { ChapterSchema, MangaSchema } from "./models.ts";
+import * as utils from "./utils.ts";
 
 function preprocessManga(manga: MangaSchema) {
   return {
-    ...omit(manga, "pathName"),
+    ...utils.omit(manga, "pathName"),
     thumbnailUrl: `/api/manga/${manga.id}/cover`,
   };
 }
 
 function preprocessChapter(chapter: ChapterSchema) {
   return {
-    ...omit(chapter, "pathName"),
+    ...utils.omit(chapter, "pathName"),
     uploadDate: chapter.uploadDate.valueOf(),
   };
 }
@@ -57,7 +44,7 @@ const pageRouter = new Router<{ manga: MangaSchema; chapter: ChapterSchema }>({
     const manga = ctx.state.manga;
     const chapter = ctx.state.chapter;
 
-    const chapterPath = getChapterPath(manga, chapter);
+    const chapterPath = utils.getChapterPath(manga, chapter);
 
     const zip = new StreamZip.async({ file: chapterPath });
 
@@ -74,7 +61,7 @@ const pageRouter = new Router<{ manga: MangaSchema; chapter: ChapterSchema }>({
       return;
     }
 
-    ctx.response.type = extenionMimeMap(pickedEntry.name);
+    ctx.response.type = utils.extenionMimeMap(pickedEntry.name);
     ctx.response.body = await zip.entryData(pickedEntry);
 
     zip.close();
@@ -86,7 +73,7 @@ const chapterRouter = new Router<{
 }>({ prefix: "/chapter" })
   .param("chapId", async (chapId, ctx, next) => {
     const index = Number(chapId);
-    const chapter = await getChapterWithNumber(index, ctx.state.manga.id);
+    const chapter = await db.getChapterWithNumber(index, ctx.state.manga.id);
     if (!chapter) {
       ctx.response.status = Status.BadRequest;
       return;
@@ -96,7 +83,7 @@ const chapterRouter = new Router<{
   })
   .get("/all", async (ctx) => {
     const manga = ctx.state.manga;
-    ctx.response.body = (await getMangaChapters(manga.id)).sort(
+    ctx.response.body = (await db.getMangaChapters(manga.id)).sort(
       (a, b) => a.chapterNumber - b.chapterNumber
     );
   })
@@ -107,7 +94,7 @@ const chapterRouter = new Router<{
 
 const mangaRouter = new Router<{ manga: MangaSchema }>({ prefix: "/manga" })
   .param("id", async (id, ctx, next) => {
-    const manga = await getManga(Number(id));
+    const manga = await db.getManga(Number(id));
     if (manga === null) {
       ctx.response.status = Status.BadRequest;
       return;
@@ -118,7 +105,9 @@ const mangaRouter = new Router<{ manga: MangaSchema }>({ prefix: "/manga" })
     await next();
   })
   .get("/all", async (ctx) => {
-    ctx.response.body = (await getAllMangas()).map((v) => preprocessManga(v));
+    ctx.response.body = (await db.getAllMangas()).map((v) =>
+      preprocessManga(v)
+    );
   })
   .get("/:id", (ctx) => {
     ctx.response.body = preprocessManga(ctx.state.manga);
@@ -131,8 +120,10 @@ const mangaRouter = new Router<{ manga: MangaSchema }>({ prefix: "/manga" })
       return;
     }
 
-    const cover = Deno.readFileSync(join(getMangaPath(manga), manga.cover));
-    ctx.response.type = extenionMimeMap(manga.cover);
+    const cover = Deno.readFileSync(
+      join(utils.getMangaPath(manga), manga.cover)
+    );
+    ctx.response.type = utils.extenionMimeMap(manga.cover);
     ctx.response.body = cover;
   })
   .get("/:id", chapterRouter.routes());
@@ -140,7 +131,7 @@ const mangaRouter = new Router<{ manga: MangaSchema }>({ prefix: "/manga" })
 const categoryRouter = new Router<{ category: string }>({ prefix: "/category" })
   .param("id", async (id, ctx, next) => {
     const index = Number(id) - 1;
-    const categories = await getCategories();
+    const categories = await db.getCategories();
     const pickedCategory = categories[index];
     if (!pickedCategory) {
       ctx.response.status = Status.BadRequest;
@@ -150,7 +141,7 @@ const categoryRouter = new Router<{ category: string }>({ prefix: "/category" })
     await next();
   })
   .get("/all", async (ctx) => {
-    ctx.response.body = (await getCategories()).map((v, i) => {
+    ctx.response.body = (await db.getCategories()).map((v, i) => {
       return {
         name: v,
         url: `/api/category/${i + 1}`,
@@ -160,7 +151,7 @@ const categoryRouter = new Router<{ category: string }>({ prefix: "/category" })
   .get("/:id", async (ctx) => {
     ctx.response.body = {
       name: ctx.state.category,
-      mangas: (await getMangasInCategory(ctx.state.category)).map((v) => {
+      mangas: (await db.getMangasInCategory(ctx.state.category)).map((v) => {
         if (typeof v === "string") {
           return v;
         }
@@ -182,7 +173,7 @@ const categoryRouter = new Router<{ category: string }>({ prefix: "/category" })
       return;
     }
 
-    await addMangaToCategory(post.data.mangaId, ctx.state.category);
+    await db.addMangaToCategory(post.data.mangaId, ctx.state.category);
 
     ctx.response.status = 200;
   });
