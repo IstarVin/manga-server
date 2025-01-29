@@ -6,8 +6,10 @@
   "imports": {
     "@mr/retry": "jsr:@mr/retry@^0.0.3",
     "@oak/oak": "jsr:@oak/oak@^17.1.4",
+    "@popov/logger": "jsr:@popov/logger@^2.1.0",
     "@std/dotenv": "jsr:@std/dotenv@^0.225.3",
     "@std/fs": "jsr:@std/fs@^1.0.10",
+    "@std/http": "jsr:@std/http@^1.0.12",
     "@std/path": "jsr:@std/path@^1.0.8",
     "@std/text": "jsr:@std/text@^1.0.10",
     "@topcli/spinner": "npm:@topcli/spinner@^2.1.2",

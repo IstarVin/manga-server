@@ -3,25 +3,41 @@ import config from "./src/config.ts";
 import { createErrorMessage } from "./src/errors.ts";
 import { apiRouter } from "./src/routes.ts";
 import { scanLibrary } from "./src/server.ts";
-// import { runAndSetInterval } from "./src/utils.ts";
+import { oakLogger } from "./src/middlewares.ts";
+import { initLogger, logError, logInfo } from "@popov/logger";
 
-setInterval(() => {
-  scanLibrary({ rescanManga: config.rescanManga, deep: config.deepScan });
-}, config.scanInterval);
+initLogger("./log.txt", { tee: true });
 
-const app = new Application()
-  .use(async (ctx, next) => {
-    try {
-      await next();
-    } catch (e) {
-      if (isHttpError(e)) {
-        ctx.response.status = Status.BadRequest;
-        ctx.response.body = createErrorMessage("Invalid request", e.message);
+async function main() {
+  setInterval(() => {
+    scanLibrary({
+      rescanManga: config.rescanManga,
+      deep: config.deepScan,
+      verbose: config.verbose,
+    });
+  }, config.scanInterval);
+
+  const app = new Application()
+    .use(oakLogger())
+    .use(async (ctx, next) => {
+      try {
+        await next();
+      } catch (e) {
+        if (isHttpError(e)) {
+          ctx.response.status = Status.BadRequest;
+          ctx.response.body = createErrorMessage("Invalid request", e.message);
+        }
       }
-    }
-  })
-  .use(apiRouter.routes());
+    })
+    .use(apiRouter.routes());
 
-console.log(`Listening to ${config.serverAddress}`);
+  logInfo(`Listening to ${config.serverAddress}`, "Oak Application");
 
-await app.listen(config.serverAddress);
+  await app.listen(config.serverAddress);
+}
+
+try {
+  await main();
+} catch (err) {
+  logError(`Unkown Error: ${err}`, "Server");
+}

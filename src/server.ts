@@ -7,18 +7,26 @@ import { syncTachidesk } from "./tachidesk.ts";
 import config from "./config.ts";
 import { Spinner } from "@topcli/spinner";
 import { setImmediate } from "node:timers";
+import { logInfo, logSuccess } from "@popov/logger";
 
 let scanning = false;
 
 export async function scanLibrary(options?: {
   rescanManga?: boolean;
   deep?: boolean;
+  verbose?: boolean;
 }) {
   if (scanning) {
     return "Scanning in progress";
   }
 
+  if (options === undefined || options.verbose === undefined) {
+    options = { ...options, verbose: true };
+  }
+
   scanning = true;
+
+  logInfo("Started library scan", "Scan Library");
 
   let totalTimeMs = 0;
 
@@ -33,6 +41,8 @@ export async function scanLibrary(options?: {
 
     for await (const manga of Deno.readDir(sourcePath)) {
       if (manga.isFile) continue;
+
+      const startDate = Date.now();
 
       const mangaPath = join(sourcePath, manga.name);
       const chaptersDir = Array.from(Deno.readDirSync(mangaPath));
@@ -49,14 +59,18 @@ export async function scanLibrary(options?: {
             chapterCount == dbChapterCount ||
             (await db.getManga(manga.name))?.status === "COMPLETED"
           ) {
-            console.log("skipped", manga.name);
+            if (options.verbose) {
+              logInfo(`Skipped ${manga.name}`, "Scan Library");
+            }
             continue;
           }
         }
       }
 
-      const startDate = Date.now();
-      const spinner = new Spinner({ color: "yellow" });
+      const spinner = new Spinner({
+        color: "yellow",
+        verbose: options.verbose,
+      });
       spinner.start(`Adding ${manga.name}`);
 
       const mangaDb: MakeOptional<MangaSchema, "id"> = {
@@ -141,6 +155,6 @@ export async function scanLibrary(options?: {
       syncTachidesk({ ...mangaDb, id: mangaId });
     }
   }
-  console.log("Finished library scan:", msToTime(totalTimeMs));
+  logSuccess(`Finished library scan: ${msToTime(totalTimeMs)}`, "Scan Library");
   scanning = false;
 }

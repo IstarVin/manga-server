@@ -1,3 +1,4 @@
+import { logDebug } from "@popov/logger";
 import config from "./config.ts";
 import { ChapterSchema, MangaSchema } from "./models.ts";
 import { createKeyValueObject, MakeOptional } from "./utils.ts";
@@ -134,7 +135,7 @@ export const addManga = retry(
       .commit();
 
     if (!res.ok) {
-      console.log("Adding again");
+      logDebug(`${manga.pathName} Adding again`, "Add Manga");
       throw new Error("Not ok");
     }
 

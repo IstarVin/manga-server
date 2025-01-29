@@ -8,6 +8,7 @@ export type Config = {
   mangasPath: string;
   dbPath: string;
 
+  verbose?: boolean;
   tachideskGraphQLUrl: string;
   deepScan?: boolean;
   rescanManga?: boolean;
@@ -31,6 +32,7 @@ const defaultConfig: Config = {
   mangasPath: "./mangas",
   dbPath: "./db.kv",
 
+  verbose: true,
   tachideskGraphQLUrl: "http://localhost:4567/api/graphql",
   deepScan: false,
   rescanChapters: false,

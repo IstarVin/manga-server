@@ -201,7 +201,8 @@ export const apiRouter = new Router({ prefix: "/api" })
     const rescanManga =
       ctx.request.url.searchParams.get("rescanManga") === "true";
 
-    scanLibrary({ deep, rescanManga });
+    scanLibrary({ deep, rescanManga, verbose: true });
 
     ctx.response.body = "Scanning in progress";
+    ctx.response.status = Status.OK;
   });

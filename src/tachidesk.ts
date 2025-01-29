@@ -5,6 +5,7 @@ import { downloadCover, getMangaPath, removeScanlator } from "./utils.ts";
 import { getMangaChapters, updateChapter, updateManga } from "./db.ts";
 import { slugify } from "@std/text/unstable-slugify";
 import { retry } from "@mr/retry";
+import { logError } from "@popov/logger";
 
 type MangaSchemaGraphQL = {
   data: {
@@ -109,10 +110,9 @@ export const syncTachidesk = retry(
       const pickedChaper = pickedManga.chapters.nodes[index];
 
       if (!pickedChaper) {
-        console.error(
-          "error getting info for",
-          chapter.pathName,
-          manga.pathName
+        logError(
+          `Error getting info for ${manga.pathName}: ${chapter.pathName}`,
+          "Tachidesk Sync"
         );
 
         continue;
