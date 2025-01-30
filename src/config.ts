@@ -8,9 +8,9 @@ const Config = z.object({
   serverAddress: z.string(),
   configPath: z.string(),
   mangasPath: z.string(),
-  dbPath: z.string(),
+  dbPath: z.string().optional(),
   tachideskGraphQLUrl: z.string(),
-  scanInterval: z.number(),
+  scanInterval: z.number().positive(),
   verbose: z.boolean().optional(),
   deepScan: z.boolean().optional(),
   rescanManga: z.boolean().optional(),
@@ -22,7 +22,6 @@ const defaultConfig: Config = {
   serverAddress: "0.0.0.0:8008",
   configPath: ".",
   mangasPath: "./mangas",
-  dbPath: "./db.kv",
 
   verbose: true,
   tachideskGraphQLUrl: "http://localhost:4567/api/graphql",
@@ -32,7 +31,8 @@ const defaultConfig: Config = {
   scanInterval: 43200000, // 12 hours
 };
 
-const configFilePath = join(defaultConfig.configPath, "config.json");
+let config: Config = defaultConfig;
+const configFilePath = () => join(config.configPath, "config.json");
 
 async function checkConfig(conf: Config) {
   const res: {
@@ -52,7 +52,7 @@ async function checkConfig(conf: Config) {
 }
 
 async function watchConfigFile() {
-  const watch = Deno.watchFs(configFilePath);
+  const watch = Deno.watchFs(configFilePath());
   for await (const event of watch) {
     if (event.kind === "modify") {
       logInfo("Config file modified, refreshing configuration", "Watcher");
@@ -73,20 +73,18 @@ function setupConfigFile(path: string): Config {
     }
   } else {
     logInfo("Writing new config file", "Config Setup");
+    Deno.mkdirSync(config.configPath, { recursive: true });
     Deno.writeTextFile(path, JSON.stringify(defaultConfig, null, 2));
     return defaultConfig;
   }
 }
 
-let config: Config = defaultConfig;
-
-watchConfigFile();
-
 export async function setupConfig() {
-  config = setupConfigFile(configFilePath);
+  config.configPath = Deno.env.get("CONFIG_PATH") || config.configPath;
+
+  config = setupConfigFile(configFilePath());
 
   config.serverAddress = Deno.env.get("SERVER_ADDRESS") || config.serverAddress;
-  config.configPath = Deno.env.get("CONFIG_PATH") || config.configPath;
   config.mangasPath = Deno.env.get("MANGAS_PATH") || config.mangasPath;
   config.tachideskGraphQLUrl =
     Deno.env.get("TACHIDESK_GRAPHQL_URL") || config.tachideskGraphQLUrl;
@@ -103,6 +101,11 @@ export async function setupConfig() {
 
     Deno.exit(1);
   }
+
+  config.dbPath = join(config.configPath, "db.kv");
 }
+
+await setupConfig();
+watchConfigFile();
 
 export default config;

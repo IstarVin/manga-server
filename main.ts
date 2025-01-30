@@ -1,14 +1,13 @@
 import { Application, Status, isHttpError } from "@oak/oak";
-import config, { setupConfig } from "./src/config.ts";
+import config from "./src/config.ts";
 import { createErrorMessage } from "./src/errors.ts";
 import { apiRouter } from "./src/routes.ts";
 import { scanLibrary } from "./src/server.ts";
 import { oakLogger } from "./src/middlewares.ts";
 import { initLogger, logError, logInfo } from "@popov/logger";
+import { join } from "@std/path/join";
 
-initLogger("./log.txt", { tee: true });
-
-await setupConfig();
+initLogger(join(config.configPath, "logs.txt"), { tee: true });
 
 async function main() {
   setInterval(() => {

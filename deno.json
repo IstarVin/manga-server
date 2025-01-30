@@ -1,7 +1,8 @@
 {
   "tasks": {
     "test:db": "deno run --unstable-kv -EWRN src/db_test.ts",
-    "dev": "deno run --unstable-kv --watch -EWRN main.ts"
+    "dev": "deno run --unstable-kv --watch -EWRN main.ts",
+    "start": "deno run --unstable-kv -EWRN main.ts"
   },
   "imports": {
     "@mr/retry": "jsr:@mr/retry@^0.0.3",

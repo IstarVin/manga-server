@@ -1,0 +1,8 @@
+.vscode
+config.json
+mangas
+.env
+db.kv*
+try*
+log.txt
+.git

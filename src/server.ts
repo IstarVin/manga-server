@@ -1,10 +1,10 @@
 import { join, extname } from "@std/path";
 import StreamZip from "node-stream-zip";
+import config from "./config.ts";
 import * as db from "./db.ts";
 import { MakeOptional, msToTime, smartSort } from "./utils.ts";
 import { ChapterSchema, MangaSchema } from "./models.ts";
 import { syncTachidesk } from "./tachidesk.ts";
-import config from "./config.ts";
 import { Spinner } from "@topcli/spinner";
 import { setImmediate } from "node:timers";
 import { logInfo, logSuccess } from "@popov/logger";
