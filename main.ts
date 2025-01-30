@@ -1,5 +1,5 @@
 import { Application, Status, isHttpError } from "@oak/oak";
-import config from "./src/config.ts";
+import config, { setupConfig } from "./src/config.ts";
 import { createErrorMessage } from "./src/errors.ts";
 import { apiRouter } from "./src/routes.ts";
 import { scanLibrary } from "./src/server.ts";
@@ -7,6 +7,8 @@ import { oakLogger } from "./src/middlewares.ts";
 import { initLogger, logError, logInfo } from "@popov/logger";
 
 initLogger("./log.txt", { tee: true });
+
+await setupConfig();
 
 async function main() {
   setInterval(() => {

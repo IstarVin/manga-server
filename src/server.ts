@@ -151,6 +151,10 @@ export async function scanLibrary(options?: {
       totalTimeMs += timeTookMs;
 
       spinner.succeed(`Inserted ${manga.name}: ${msToTime(timeTookMs)}`);
+      logInfo(
+        `Inserted ${manga.name}: ${msToTime(timeTookMs)}`,
+        "Scan Library"
+      );
 
       syncTachidesk({ ...mangaDb, id: mangaId });
     }
