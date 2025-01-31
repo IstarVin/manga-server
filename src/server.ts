@@ -20,8 +20,13 @@ export async function scanLibrary(options?: {
     return "Scanning in progress";
   }
 
-  if (options === undefined || options.verbose === undefined) {
+  if (
+    config.verbose &&
+    (options === undefined || options.verbose === undefined)
+  ) {
     options = { ...options, verbose: true };
+  } else {
+    options = { ...options, verbose: false };
   }
 
   scanning = true;
