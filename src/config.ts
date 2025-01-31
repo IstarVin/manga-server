@@ -85,6 +85,11 @@ export async function setupConfig() {
   config = setupConfigFile(configFilePath());
 
   config.serverAddress = Deno.env.get("SERVER_ADDRESS") || config.serverAddress;
+
+  if (Deno.env.get("VERBOSE")) {
+    config.verbose = Deno.env.get("VERBOSE") === "true";
+  }
+
   config.mangasPath = Deno.env.get("MANGAS_PATH") || config.mangasPath;
   config.tachideskGraphQLUrl =
     Deno.env.get("TACHIDESK_GRAPHQL_URL") || config.tachideskGraphQLUrl;

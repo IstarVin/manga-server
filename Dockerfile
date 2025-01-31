@@ -13,5 +13,6 @@ RUN mkdir /mangas
 
 ENV CONFIG_PATH=/config
 ENV MANGAS_PATH=/mangas
+ENV VERBOSE=false
 
 CMD [ "deno", "run", "start" ]

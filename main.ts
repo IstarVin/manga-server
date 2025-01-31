@@ -1,13 +1,13 @@
+import { initLogger, logError, logInfo } from "@popov/logger";
+initLogger(join(config.configPath, "logs.txt"), { tee: true });
+
 import { Application, Status, isHttpError } from "@oak/oak";
 import config from "./src/config.ts";
 import { createErrorMessage } from "./src/errors.ts";
 import { apiRouter } from "./src/routes.ts";
 import { scanLibrary } from "./src/server.ts";
 import { oakLogger } from "./src/middlewares.ts";
-import { initLogger, logError, logInfo } from "@popov/logger";
 import { join } from "@std/path/join";
-
-initLogger(join(config.configPath, "logs.txt"), { tee: true });
 
 async function main() {
   setInterval(() => {
