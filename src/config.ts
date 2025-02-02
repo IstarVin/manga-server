@@ -10,6 +10,7 @@ const Config = z.object({
   mangasPath: z.string(),
   dbPath: z.string().optional(),
   tachideskGraphQLUrl: z.string(),
+  komgaUrl: z.string().optional(),
   scanInterval: z.number().positive(),
   verbose: z.boolean().optional(),
   deepScan: z.boolean().optional(),
@@ -25,6 +26,7 @@ const defaultConfig: Config = {
 
   verbose: true,
   tachideskGraphQLUrl: "http://localhost:4567/api/graphql",
+  komgaUrl: "http://localhost:8080",
   deepScan: false,
   rescanChapters: false,
   rescanManga: false,

@@ -1,11 +1,14 @@
 import { join } from "@std/path";
 import config from "./config.ts";
-import { ChapterSchema, MangaSchema } from "./models.ts";
+import { ChapterSchema, MangaSchema, StatusType } from "./models.ts";
 import { downloadCover, getMangaPath, removeScanlator } from "./utils.ts";
 import { getMangaChapters, updateChapter, updateManga } from "./db.ts";
 import { slugify } from "@std/text/unstable-slugify";
 import { retry } from "@mr/retry";
 import { logError } from "@popov/logger";
+import { z } from "zod";
+import { STATUS_CODE } from "jsr:@oak/commons@1/status";
+import { METHOD } from "@std/http/unstable-method";
 
 type MangaSchemaGraphQL = {
   data: {
@@ -130,9 +133,70 @@ export const syncTachidesk = retry(
       );
     }
 
+    await syncToKomga(mangaReturn);
+
     await updateCovers(manga, pickedManga.thumbnailUrl);
 
     return mangaReturn;
   },
   { attempts: 20 }
 );
+
+export async function syncToKomga(manga: MangaSchema) {
+  const headers = {
+    "Content-Type": "application/json",
+    Authorization:
+      "Basic " +
+      btoa(`${Deno.env.get("KOMGA_USER")}:${Deno.env.get("KOMGA_PASS")}`),
+  };
+
+  const searchResponse = await fetch(`${config.komgaUrl}/api/v1/series/list`, {
+    method: METHOD.Post,
+    headers,
+    body: JSON.stringify({
+      fullTextSearch: manga.title,
+    }),
+  });
+
+  const searchZ = z.object({
+    content: z.array(
+      z.object({
+        id: z.string(),
+        name: z.string(),
+      })
+    ),
+  });
+
+  const searchRes = searchZ.parse(await searchResponse.json());
+
+  const pickedManga = searchRes.content.at(0);
+  if (!pickedManga) {
+    return;
+  }
+
+  const statusMap: Map<z.infer<typeof StatusType>, string> = new Map();
+  statusMap.set("COMPLETED", "ENDED");
+  statusMap.set("DROPPED", "ABANDONED");
+
+  const body = JSON.stringify({
+    title: manga.title,
+    summary: manga.description,
+    status: statusMap.get(manga.status) ?? manga.status,
+    genres: manga.genres,
+  });
+
+  const res = await fetch(
+    `${config.komgaUrl}/api/v1/series/${pickedManga.id}/metadata`,
+    {
+      method: METHOD.Patch,
+      headers,
+      body,
+    }
+  );
+
+  if (res.status === STATUS_CODE.NoContent) {
+    console.log("Added", manga.title, "details to komga");
+  } else {
+    console.log(res.statusText, manga.title);
+  }
+}
