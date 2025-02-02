@@ -16,10 +16,11 @@ function preprocessManga(manga: MangaSchema) {
   };
 }
 
-function preprocessChapter(chapter: ChapterSchema) {
+function preprocessChapter(chapter: ChapterSchema, mangaId: number) {
   return {
     ...utils.omit(chapter, "pathName"),
     uploadDate: chapter.uploadDate.valueOf(),
+    mangaId,
   };
 }
 
@@ -89,12 +90,15 @@ const chapterRouter = new Router<{
   })
   .get("/all", async (ctx) => {
     const manga = ctx.state.manga;
-    ctx.response.body = (await db.getMangaChapters(manga.id)).sort(
-      (a, b) => a.chapterNumber - b.chapterNumber
-    );
+    ctx.response.body = (await db.getMangaChapters(manga.id))
+      .sort((a, b) => b.chapterNumber - a.chapterNumber)
+      .map((v) => preprocessChapter(v, manga.id));
   })
   .get("/:chapId", (ctx) => {
-    ctx.response.body = preprocessChapter(ctx.state.chapter);
+    ctx.response.body = preprocessChapter(
+      ctx.state.chapter,
+      ctx.state.manga.id
+    );
   })
   .get("/:chapId", pageRouter.routes());
 
@@ -115,9 +119,22 @@ const mangaRouter = new Router<{ manga: MangaSchema }>({ prefix: "/manga" })
     await next();
   })
   .get("/all", async (ctx) => {
-    ctx.response.body = (await db.getAllMangas()).map((v) =>
-      preprocessManga(v)
-    );
+    const latest = ctx.request.url.searchParams.get("type") === "latest";
+    const allMangas = await db.getAllMangas();
+    if (latest) {
+      allMangas.reverse();
+    }
+    ctx.response.body = allMangas.map((v) => preprocessManga(v));
+  })
+  .get("/search", async (ctx) => {
+    const query = ctx.request.url.searchParams.get("query");
+    if (!query) {
+      ctx.response.redirect("/api/manga/all");
+      return;
+    }
+
+    const mangas = await db.searchMangas(query);
+    ctx.response.body = mangas.map((v) => preprocessManga(v));
   })
   .get("/:id", (ctx) => {
     ctx.response.body = preprocessManga(ctx.state.manga);
@@ -141,14 +158,14 @@ const mangaRouter = new Router<{ manga: MangaSchema }>({ prefix: "/manga" })
 
 const categoryRouter = new Router<{ category: string }>({ prefix: "/category" })
   .param("id", async (id, ctx, next) => {
-    const index = Number(id) - 1;
+    const index = Number(id);
     const categories = await db.getCategories();
     const pickedCategory = categories[index];
     if (!pickedCategory) {
       ctx.response.status = Status.BadRequest;
       ctx.response.body = createErrorMessage(
         "Not found",
-        "no category found with the givin id"
+        "no category found with the given id"
       );
       return;
     }
@@ -159,7 +176,8 @@ const categoryRouter = new Router<{ category: string }>({ prefix: "/category" })
     ctx.response.body = (await db.getCategories()).map((v, i) => {
       return {
         name: v,
-        url: `/api/category/${i + 1}`,
+        id: i,
+        url: `/api/category/${i}`,
       };
     });
   })
@@ -196,13 +214,21 @@ const categoryRouter = new Router<{ category: string }>({ prefix: "/category" })
 export const apiRouter = new Router({ prefix: "/api" })
   .use(mangaRouter.routes())
   .use(categoryRouter.routes())
-  .get("/library/scan", (ctx) => {
+  .get("/library/scan", async (ctx) => {
     const deep = ctx.request.url.searchParams.get("deep") === "true";
+    const blocking = ctx.request.url.searchParams.get("blocking") === "true";
     const rescanManga =
       ctx.request.url.searchParams.get("rescanManga") === "true";
 
-    scanLibrary({ deep, rescanManga, verbose: true });
+    const opts = { deep, rescanManga, verbose: true };
 
-    ctx.response.body = "Scanning in progress";
+    if (blocking) {
+      await scanLibrary(opts);
+      ctx.response.redirect("/api/manga/all");
+      return;
+    } else {
+      scanLibrary(opts);
+      ctx.response.body = "Scanning in progress";
+    }
     ctx.response.status = Status.OK;
   });

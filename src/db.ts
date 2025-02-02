@@ -113,6 +113,14 @@ export async function getMangaInSource(sourceName: string) {
   return await dereference(mangas, getManga);
 }
 
+export async function searchMangas(query: string) {
+  const mangas = await getAllMangas();
+  return mangas.filter((manga) => {
+    if (!manga.title) return false;
+    return manga.title.toLowerCase().includes(query.toLowerCase());
+  });
+}
+
 export const addManga = retry(
   async (manga: MakeOptional<MangaSchema, "id">) => {
     const id = await mangaToId(manga.pathName);

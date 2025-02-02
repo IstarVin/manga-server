@@ -11,6 +11,14 @@ import { logInfo, logSuccess } from "@popov/logger";
 
 let scanning = false;
 
+// export async function watchLibrary() {
+//   for await (const watch of Deno.watchFs(config.mangasPath)) {
+//     if (watch.kind === "create" || watch.kind === "modify") {
+//       await scanLibrary();
+//     }
+//   }
+// }
+
 export async function scanLibrary(options?: {
   rescanManga?: boolean;
   deep?: boolean;
