@@ -133,7 +133,7 @@ export const syncTachidesk = retry(
       );
     }
 
-    await syncToKomga(mangaReturn);
+    // await syncToKomga(mangaReturn);
 
     await updateCovers(manga, pickedManga.thumbnailUrl);
 
