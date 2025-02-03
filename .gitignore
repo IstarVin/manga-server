@@ -4,3 +4,4 @@ config.json
 db.kv*
 try*
 logs.txt
+dist/*

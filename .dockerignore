@@ -4,5 +4,6 @@ mangas
 .env
 db.kv*
 try*
-log.txt
+logs.txt
 .git
+Dockerfile
